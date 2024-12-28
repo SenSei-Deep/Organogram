@@ -35,8 +35,8 @@ const App = () => {
           <p>No data available for this department.</p>
         )}
 
-        {/* Employee details section */}
-        {selectedEmployee && (
+        Employee details section
+        {/* {selectedEmployee && (
           <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
             <h2>Employee Details</h2>
             <p><strong>Name:</strong> {selectedEmployee.EMPLOYEE_LEGAL_NAME || 'Unknown'}</p>
@@ -45,7 +45,7 @@ const App = () => {
             <p><strong>Department:</strong> {selectedEmployee.EMPLOYEE_DEPARTMENT_NAME || 'Unknown Department'}</p>
             <p><strong>CTC:</strong> {selectedEmployee.EMPLOYEE_CTC || 'Not Available'}</p>
           </div>
-        )}
+        )} */}
       </div>
     </ErrorBoundary>
   );
