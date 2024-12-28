@@ -4,7 +4,7 @@ import { transformDataToHierarchy } from './transformData'; // Import the transf
 import ErrorBoundary from './ErrorBoundary'; // Import ErrorBoundary
 
 // Import Corporate Office data
-import corporateOfficeData from './data/Paras_Corporate.json'; // Corporate Office data
+import corporateOfficeData from './data/Corporate_data.json'; // Corporate Office data
 
 const App = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
