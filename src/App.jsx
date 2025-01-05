@@ -26,7 +26,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <div>
-        <h1>Organogram</h1>
+        <h1></h1>
 
         {/* Render org chart only if data is available */}
         {hierarchyData.length > 0 ? (
@@ -35,7 +35,6 @@ const App = () => {
           <p>No data available for this department.</p>
         )}
 
-        Employee details section
         {/* {selectedEmployee && (
           <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
             <h2>Employee Details</h2>

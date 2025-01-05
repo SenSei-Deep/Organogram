@@ -75,63 +75,68 @@ const OrgChart = ({ data, onNodeClick }) => {
 
   const fitToView = () => {
     if (!chartRef.current) return;
-  
-    // Get the parent container of the chart
+
     const container = chartRef.current.parentElement;
-  
-    // Find all expanded nodes
     const visibleNodes = Array.from(chartRef.current.querySelectorAll(".org-node")).filter((node) =>
       expandedNodes.includes(node.id)
     );
-  
+
     if (visibleNodes.length === 0) return;
-  
-    // Calculate bounding box of visible nodes
+
     const boundingBox = visibleNodes.reduce(
       (acc, node) => {
         const rect = node.getBoundingClientRect();
         return {
           left: Math.min(acc.left, rect.left),
-          right: Math.max(acc.right, rect.right),
           top: Math.min(acc.top, rect.top),
+          right: Math.max(acc.right, rect.right),
           bottom: Math.max(acc.bottom, rect.bottom),
         };
       },
-      {
-        left: Infinity,
-        right: -Infinity,
-        top: Infinity,
-        bottom: -Infinity,
-      }
+      { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity }
     );
-  
-    // Convert bounding box to coordinates relative to the container
+
+    const boundingBoxWidth = boundingBox.right - boundingBox.left;
+    const boundingBoxHeight = boundingBox.bottom - boundingBox.top;
+
     const containerRect = container.getBoundingClientRect();
-    const boundingBoxCenterX = (boundingBox.left + boundingBox.right) / 2 - containerRect.left;
-    const boundingBoxCenterY = (boundingBox.top + boundingBox.bottom) / 2 - containerRect.top;
-  
-    // Calculate the scroll offsets to center the bounding box in the container
-    const scrollLeft = boundingBoxCenterX - container.clientWidth / 2;
-    const scrollTop = boundingBoxCenterY - container.clientHeight / 2;
-  
-    // Smoothly scroll the container to center the nodes
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    const zoomX = containerWidth / boundingBoxWidth;
+    const zoomY = containerHeight / boundingBoxHeight;
+    const zoom = Math.min(zoomX, zoomY, 1);
+
+    setZoomLevel(zoom);
+
+    const scrollLeft = boundingBox.left + boundingBoxWidth / 2 - containerWidth / (2 * zoom);
+    const scrollTop = boundingBox.top + boundingBoxHeight / 2 - containerHeight / (2 * zoom);
+
     container.scrollTo({
       left: scrollLeft,
       top: scrollTop,
       behavior: "smooth",
     });
   };
-  
+
+  const [activeTooltips, setActiveTooltips] = useState([]); // State to track active tooltips
 
   const renderNode = (node) => {
     const isExpanded = expandedNodes.includes(node.EMPLOYEE_LEGAL_NAME);
     const isVerticalLayout = node.children && node.children.length > 10;
-
+  
     const placeholderPhoto =
       node.PERSONAL_GENDER === "Female"
         ? "https://via.placeholder.com/50/FFC0CB/000000?text=♀"
         : "https://via.placeholder.com/50/87CEEB/000000?text=♂";
-
+  
+    const toggleTooltip = (e, nodeName) => {
+      e.stopPropagation();
+      setActiveTooltips((prev) =>
+        prev.includes(nodeName) ? prev.filter((name) => name !== nodeName) : [...prev, nodeName]
+      );
+    };
+  
     return (
       <div
         id={node.EMPLOYEE_LEGAL_NAME}
@@ -151,21 +156,40 @@ const OrgChart = ({ data, onNodeClick }) => {
             <div>
               <img
                 src={placeholderPhoto}
-                alt={`${
-                  node.PERSONAL_GENDER === "Female" ? "Female" : "Male"
-                } Placeholder`}
+                alt={`${node.PERSONAL_GENDER === "Female" ? "Female" : "Male"} Placeholder`}
                 className="employee-photo"
               />
-              <p className="org-node-title">
-                {node.EMPLOYEE_LEGAL_NAME}
-              </p>
-              <p className="org-node-title">
-                ({node.EMPLOYEE_DEPARTMENT_NAME})
-              </p>
+              <p className="org-node-title">{node.EMPLOYEE_LEGAL_NAME}</p>
+              <p className="org-node-title">({node.EMPLOYEE_DEPARTMENT_NAME})</p>
               <p className="org-node-subtitle">{node["Job Title"]}</p>
             </div>
+            <button
+              className="tooltip-button"
+              onClick={(e) => toggleTooltip(e, node.EMPLOYEE_LEGAL_NAME)}
+            >
+              Details
+            </button>
           </div>
-          {node.children && node.children.length > 0 && (
+          {activeTooltips.includes(node.EMPLOYEE_LEGAL_NAME) && (
+            <div className="tooltip">
+              <p>
+                <strong>Name:</strong> {node.EMPLOYEE_LEGAL_NAME}
+              </p>
+              <p>
+                <strong>Designation:</strong> {node.EMPLOYEE_DESIGNATION_NAME || "Unknown"}
+              </p>
+              <p>
+                <strong>Department:</strong> {node.EMPLOYEE_DEPARTMENT_NAME || "Unknown"}
+              </p>
+              <p>
+                <strong>CTC:</strong> {node.EMPLOYEE_CTC || "Not Available"}
+              </p>
+              <p>
+                <strong>Reports To:</strong> {node.EMPLOYEE_REPORTING_TO || "No Manager"}
+              </p>
+            </div>
+          )}
+            {node.children && node.children.length > 0 && (
             <span className="child-count">{node.children.length}</span>
           )}
         </div>
@@ -173,11 +197,7 @@ const OrgChart = ({ data, onNodeClick }) => {
           <div className="org-children">
             <TransitionGroup component={null}>
               {node.children.map((child) => (
-                <CSSTransition
-                  key={child.EMPLOYEE_LEGAL_NAME}
-                  timeout={300}
-                  classNames="fade"
-                >
+                <CSSTransition key={child.EMPLOYEE_LEGAL_NAME} timeout={300} classNames="fade">
                   <div>{renderNode(child)}</div>
                 </CSSTransition>
               ))}
@@ -187,7 +207,8 @@ const OrgChart = ({ data, onNodeClick }) => {
       </div>
     );
   };
-
+  
+  
   return (
     <div>
       <div className="zoom-controls">
